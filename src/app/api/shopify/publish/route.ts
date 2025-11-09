@@ -27,7 +27,13 @@ const getPageDocument = async (shop: string, pageId: string) => {
   return doc.exists ? doc.data() : null;
 };
 
-const getMainThemeId = async (shop: string, token: string): Promise<number> => {
+type ShopifyTheme = {
+  id: number;
+  role: string;
+  name: string;
+};
+
+const fetchThemes = async (shop: string, token: string): Promise<ShopifyTheme[]> => {
   const response = await fetch(`https://${shop}/admin/api/${LATEST_API_VERSION}/themes.json`, {
     headers: {
       "X-Shopify-Access-Token": token,
@@ -40,15 +46,17 @@ const getMainThemeId = async (shop: string, token: string): Promise<number> => {
   }
 
   const payload = await response.json();
-  const mainTheme = Array.isArray(payload.themes)
-    ? payload.themes.find((theme: { role: string }) => theme.role === "main")
-    : null;
-
-  if (!mainTheme) {
-    throw new Error("Main theme not found");
+  if (!Array.isArray(payload.themes)) {
+    return [];
   }
 
-  return Number(mainTheme.id);
+  return payload.themes
+    .map((theme: Record<string, unknown>) => ({
+      id: Number(theme.id),
+      role: String(theme.role ?? ""),
+      name: String(theme.name ?? ""),
+    }))
+    .filter((theme) => !Number.isNaN(theme.id));
 };
 
 const uploadAsset = async (shop: string, token: string, themeId: number, key: string, value: string) => {
@@ -111,7 +119,34 @@ export async function POST(request: NextRequest) {
     const blocks = pageDoc.blocks as BlockInstance[];
     const assets = generateSectionAssets(pageId, blocks);
 
-    const themeId = publishToThemeId ?? (await getMainThemeId(shop, shopDoc.accessToken));
+    const themes = await fetchThemes(shop, shopDoc.accessToken);
+
+    if (!themes.length) {
+      return NextResponse.json({ error: "No themes found for this store" }, { status: 404 });
+    }
+
+    let themeId: number;
+
+    if (publishToThemeId !== undefined) {
+      const match = themes.find((theme) => theme.id === publishToThemeId);
+      if (!match) {
+        return NextResponse.json(
+          {
+            error: `Theme ${publishToThemeId} was not found. Available theme IDs: ${themes
+              .map((theme) => `${theme.id} (${theme.role})`)
+              .join(", ")}`,
+          },
+          { status: 404 },
+        );
+      }
+      themeId = publishToThemeId;
+    } else {
+      const mainTheme = themes.find((theme) => theme.role === "main") ?? themes[0];
+      if (!mainTheme) {
+        return NextResponse.json({ error: "No eligible theme found to publish to" }, { status: 404 });
+      }
+      themeId = mainTheme.id;
+    }
 
     await uploadAsset(shop, shopDoc.accessToken, themeId, assets.sectionKey, assets.sectionLiquid);
     await uploadAsset(shop, shopDoc.accessToken, themeId, assets.templateKey, assets.templateJson);
