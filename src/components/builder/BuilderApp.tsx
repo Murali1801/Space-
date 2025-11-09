@@ -9,6 +9,8 @@ import { BuilderCanvas } from "@/components/builder/BuilderCanvas";
 import { ComponentPanel } from "@/components/builder/ComponentPanel";
 import { InspectorPanel } from "@/components/builder/InspectorPanel";
 import { useBuilderPersistence } from "@/hooks/useBuilderPersistence";
+import { usePublish } from "@/hooks/usePublish";
+import { useBuilderStore, selectHasChanges } from "@/lib/builder/store";
 
 const formatTimestamp = (iso?: string) => {
   if (!iso) {
@@ -38,15 +40,39 @@ const SaveBadge = ({ status, lastSavedAt }: { status: string; lastSavedAt?: stri
   }
 };
 
+const PublishBadge = ({ status, error }: { status: string; error?: string | null }) => {
+  switch (status) {
+    case "loading":
+      return <span className="text-xs text-indigo-300">Publishing…</span>;
+    case "success":
+      return <span className="text-xs text-emerald-300">Published</span>;
+    case "error":
+      return <span className="text-xs text-red-400">{error ?? "Publish failed"}</span>;
+    default:
+      return null;
+  }
+};
+
 const HeaderActions = ({
-  status,
+  saveStatus,
   lastSavedAt,
+  publishStatus,
+  publishError,
+  onPublish,
+  publishDisabled,
 }: {
-  status: string;
+  saveStatus: string;
   lastSavedAt?: string;
+  publishStatus: string;
+  publishError?: string | null;
+  onPublish: () => void;
+  publishDisabled: boolean;
 }) => (
   <div className="flex items-center gap-3 text-sm">
-    <SaveBadge status={status} lastSavedAt={lastSavedAt} />
+    <div className="flex flex-col gap-0.5">
+      <SaveBadge status={saveStatus} lastSavedAt={lastSavedAt} />
+      <PublishBadge status={publishStatus} error={publishError} />
+    </div>
     <Link
       href="https://partners.shopify.com/"
       target="_blank"
@@ -57,8 +83,9 @@ const HeaderActions = ({
     </Link>
     <button
       type="button"
-      className="rounded-md bg-indigo-500 px-3 py-1.5 font-medium text-white transition hover:bg-indigo-400"
-      disabled
+      className="rounded-md bg-indigo-500 px-3 py-1.5 font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:bg-slate-700"
+      onClick={onPublish}
+      disabled={publishDisabled}
     >
       Publish draft
     </button>
@@ -83,10 +110,23 @@ export function BuilderApp() {
   const pageId = searchParams.get("page") ?? "landing-page";
 
   const persistence = useBuilderPersistence({ shop, pageId });
+  const publish = usePublish({ shop, pageId });
+  const hasChanges = useBuilderStore(selectHasChanges);
+
+  const publishDisabled = !shop || hasChanges || persistence.status === "saving" || persistence.status === "loading" || publish.status === "loading";
 
   const header = useMemo(
-    () => <HeaderActions status={persistence.status} lastSavedAt={persistence.lastSavedAt} />,
-    [persistence.status, persistence.lastSavedAt],
+    () => (
+      <HeaderActions
+        saveStatus={persistence.status}
+        lastSavedAt={persistence.lastSavedAt}
+        publishStatus={publish.status}
+        publishError={publish.error}
+        onPublish={() => publish.publish()}
+        publishDisabled={publishDisabled}
+      />
+    ),
+    [persistence.status, persistence.lastSavedAt, publish.status, publish.error, publish, publishDisabled],
   );
 
   if (!shop) {
