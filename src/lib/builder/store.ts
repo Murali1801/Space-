@@ -7,6 +7,8 @@ import type { BlockInstance, BlockType } from "@/lib/builder/schema";
 type BuilderState = {
   blocks: BlockInstance[];
   selectedBlockId?: string;
+  hasChanges: boolean;
+  lastSavedAt?: string;
   addBlock: (type: BlockType, index?: number) => void;
   moveBlock: (activeId: string, overId: string) => void;
   reorderBlock: (activeId: string, newIndex: number) => void;
@@ -14,6 +16,8 @@ type BuilderState = {
   updateBlockProps: (id: string, props: Partial<BlockInstance["props"]>) => void;
   removeBlock: (id: string) => void;
   reset: () => void;
+  hydrate: (blocks: BlockInstance[]) => void;
+  markSaved: (timestamp: string) => void;
 };
 
 const withDefaults = (type: BlockType): BlockInstance => {
@@ -33,6 +37,8 @@ const withDefaults = (type: BlockType): BlockInstance => {
 export const useBuilderStore = create<BuilderState>((set) => ({
   blocks: [],
   selectedBlockId: undefined,
+  hasChanges: false,
+  lastSavedAt: undefined,
   addBlock: (type, index) => {
     set((state) => {
       const block = withDefaults(type);
@@ -47,6 +53,7 @@ export const useBuilderStore = create<BuilderState>((set) => ({
       return {
         blocks,
         selectedBlockId: block.id,
+        hasChanges: true,
       };
     });
   },
@@ -67,7 +74,7 @@ export const useBuilderStore = create<BuilderState>((set) => ({
       const [active] = blocks.splice(activeIndex, 1);
       blocks.splice(overIndex, 0, active);
 
-      return { blocks };
+      return { blocks, hasChanges: true };
     });
   },
   reorderBlock: (activeId, newIndex) => {
@@ -82,7 +89,7 @@ export const useBuilderStore = create<BuilderState>((set) => ({
       const [active] = blocks.splice(currentIndex, 1);
       blocks.splice(newIndex, 0, active);
 
-      return { blocks };
+      return { blocks, hasChanges: true };
     });
   },
   selectBlock: (id) => {
@@ -101,17 +108,23 @@ export const useBuilderStore = create<BuilderState>((set) => ({
             }
           : block,
       ),
+      hasChanges: true,
     }));
   },
   removeBlock: (id) => {
     set((state) => ({
       blocks: state.blocks.filter((block) => block.id !== id),
       selectedBlockId: state.selectedBlockId === id ? undefined : state.selectedBlockId,
+      hasChanges: true,
     }));
   },
-  reset: () => set({ blocks: [], selectedBlockId: undefined }),
+  reset: () => set({ blocks: [], selectedBlockId: undefined, hasChanges: false, lastSavedAt: undefined }),
+  hydrate: (blocks) => set({ blocks, hasChanges: false, selectedBlockId: undefined }),
+  markSaved: (timestamp) => set({ hasChanges: false, lastSavedAt: timestamp }),
 }));
 
 export const selectBlocks = (state: BuilderState) => state.blocks;
 export const selectSelectedBlock = (state: BuilderState) =>
   state.blocks.find((block) => block.id === state.selectedBlockId);
+export const selectHasChanges = (state: BuilderState) => state.hasChanges;
+export const selectLastSavedAt = (state: BuilderState) => state.lastSavedAt;
