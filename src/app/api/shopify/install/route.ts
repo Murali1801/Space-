@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   const redirectUri = encodeURIComponent(getRedirectUri());
   const installUrl = `https://${shop}/admin/oauth/authorize?client_id=${env.SHOPIFY_API_KEY}&scope=${encodeURIComponent(scope)}&redirect_uri=${redirectUri}&state=${state}&access_mode=offline`;
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set("shopify_oauth_state", state, {
     httpOnly: true,
     secure: true,
