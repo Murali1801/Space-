@@ -68,7 +68,9 @@ const uploadAsset = async (shop: string, token: string, themeId: number, key: st
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`Failed to upload asset ${key} (${response.status}): ${text}`);
+    throw new Error(
+      `Failed to upload asset ${key} (${response.status}) to theme ${themeId}: ${text || "[no response text]"}`,
+    );
   }
 };
 
