@@ -73,70 +73,77 @@ const uploadAsset = async (shop: string, token: string, themeId: number, key: st
 };
 
 export async function POST(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const shop = searchParams.get("shop");
+  try {
+    const { searchParams } = new URL(request.url);
+    const shop = searchParams.get("shop");
 
-  if (!shop || !SHOP_PARAM_REGEX.test(shop)) {
-    return NextResponse.json({ error: "Invalid or missing shop parameter" }, { status: 400 });
-  }
+    if (!shop || !SHOP_PARAM_REGEX.test(shop)) {
+      return NextResponse.json({ error: "Invalid or missing shop parameter" }, { status: 400 });
+    }
 
-  const json = await request.json().catch(() => null);
-  const parsed = payloadSchema.safeParse(json);
+    const json = await request.json().catch(() => null);
+    const parsed = payloadSchema.safeParse(json);
 
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
-  }
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
+    }
 
-  const { pageId, publishToThemeId } = parsed.data;
+    const { pageId, publishToThemeId } = parsed.data;
 
-  const shopDoc = await getShopDocument(shop);
+    const shopDoc = await getShopDocument(shop);
 
-  if (!shopDoc?.accessToken) {
-    return NextResponse.json({ error: "Shop has not installed the app" }, { status: 403 });
-  }
+    if (!shopDoc?.accessToken) {
+      return NextResponse.json({ error: "Shop has not installed the app" }, { status: 403 });
+    }
 
-  const pageDoc = await getPageDocument(shop, pageId);
+    const pageDoc = await getPageDocument(shop, pageId);
 
-  if (!pageDoc || !Array.isArray(pageDoc.blocks)) {
-    return NextResponse.json({ error: "No draft found for this page" }, { status: 404 });
-  }
+    if (!pageDoc || !Array.isArray(pageDoc.blocks)) {
+      return NextResponse.json({ error: "No draft found for this page" }, { status: 404 });
+    }
 
-  if (!pageDoc.blocks.length) {
-    return NextResponse.json({ error: "Draft is empty. Add blocks before publishing." }, { status: 400 });
-  }
+    if (!pageDoc.blocks.length) {
+      return NextResponse.json({ error: "Draft is empty. Add blocks before publishing." }, { status: 400 });
+    }
 
-  const blocks = pageDoc.blocks as BlockInstance[];
-  const assets = generateSectionAssets(pageId, blocks);
+    const blocks = pageDoc.blocks as BlockInstance[];
+    const assets = generateSectionAssets(pageId, blocks);
 
-  const themeId = publishToThemeId ?? (await getMainThemeId(shop, shopDoc.accessToken));
+    const themeId = publishToThemeId ?? (await getMainThemeId(shop, shopDoc.accessToken));
 
-  await uploadAsset(shop, shopDoc.accessToken, themeId, assets.sectionKey, assets.sectionLiquid);
-  await uploadAsset(shop, shopDoc.accessToken, themeId, assets.templateKey, assets.templateJson);
+    await uploadAsset(shop, shopDoc.accessToken, themeId, assets.sectionKey, assets.sectionLiquid);
+    await uploadAsset(shop, shopDoc.accessToken, themeId, assets.templateKey, assets.templateJson);
 
-  const db = getFirebaseAdminFirestore();
-  await db
-    .collection("shops")
-    .doc(shop)
-    .collection("pages")
-    .doc(pageId)
-    .set(
-      {
-        publishedAt: new Date().toISOString(),
-        publishedThemeId: themeId,
-        publishedAssets: {
-          section: assets.sectionKey,
-          template: assets.templateKey,
+    const db = getFirebaseAdminFirestore();
+    await db
+      .collection("shops")
+      .doc(shop)
+      .collection("pages")
+      .doc(pageId)
+      .set(
+        {
+          publishedAt: new Date().toISOString(),
+          publishedThemeId: themeId,
+          publishedAssets: {
+            section: assets.sectionKey,
+            template: assets.templateKey,
+          },
         },
-      },
-      { merge: true },
-    );
+        { merge: true },
+      );
 
-  return NextResponse.json({
-    publishedAt: new Date().toISOString(),
-    themeId,
-    assets: {
-      section: assets.sectionKey,
-      template: assets.templateKey,
-    },
-  });
+    return NextResponse.json({
+      publishedAt: new Date().toISOString(),
+      themeId,
+      assets: {
+        section: assets.sectionKey,
+        template: assets.templateKey,
+      },
+    });
+  } catch (error) {
+    console.error("Publish failed:", error);
+    const message =
+      error instanceof Error && error.message ? error.message : "Unexpected error while publishing to Shopify";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
