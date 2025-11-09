@@ -5,16 +5,24 @@ import { FormEvent, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 const normalizeShopDomain = (input: string) => {
-  const trimmed = input.trim().toLowerCase();
-  if (!trimmed) {
+  let value = input.trim().toLowerCase();
+  if (!value) {
     return "";
   }
 
-  if (trimmed.endsWith(".myshopify.com")) {
-    return trimmed;
+  value = value.replace(/^https?:\/\//, "");
+  value = value.replace(/^www\./, "");
+
+  const firstSegment = value.split("/")[0]?.trim() ?? "";
+  if (!firstSegment) {
+    return "";
   }
 
-  return `${trimmed.replace(/\.myshopify\.com$/, "")}.myshopify.com`;
+  if (firstSegment.endsWith(".myshopify.com")) {
+    return firstSegment;
+  }
+
+  return `${firstSegment.replace(/\.myshopify\.com$/, "")}.myshopify.com`;
 };
 
 export function ConnectShopifyForm() {
