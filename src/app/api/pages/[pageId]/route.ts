@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { env } from "@/lib/env";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/server";
 import type { BlockType } from "@/lib/builder/schema";
 
@@ -40,10 +39,10 @@ const ensureShopInstalled = async (shop: string) => {
 const getPageRef = (shop: string, pageId: string) =>
   getFirebaseAdminFirestore().collection("shops").doc(shop).collection("pages").doc(pageId);
 
-export async function GET(request: Request, { params }: { params: { pageId: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ pageId: string }> }) {
   const { searchParams } = new URL(request.url);
   const shop = searchParams.get("shop");
-  const pageId = params.pageId;
+  const { pageId } = await context.params;
 
   if (!shop || !SHOP_PARAM_REGEX.test(shop)) {
     return NextResponse.json({ error: "Invalid or missing shop parameter" }, { status: 400 });
@@ -75,10 +74,10 @@ export async function GET(request: Request, { params }: { params: { pageId: stri
   });
 }
 
-export async function POST(request: Request, { params }: { params: { pageId: string } }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ pageId: string }> }) {
   const { searchParams } = new URL(request.url);
   const shop = searchParams.get("shop");
-  const pageId = params.pageId;
+  const { pageId } = await context.params;
 
   if (!shop || !SHOP_PARAM_REGEX.test(shop)) {
     return NextResponse.json({ error: "Invalid or missing shop parameter" }, { status: 400 });
