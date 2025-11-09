@@ -5,7 +5,7 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
-import type { ReactNode } from "react";
+import type { ReactNode, JSX as ReactJSX } from "react";
 
 import { BLOCK_DEFINITIONS } from "@/lib/builder/definitions";
 import { selectBlocks, selectSelectedBlock, useBuilderStore } from "@/lib/builder/store";
@@ -118,7 +118,7 @@ const BlockPreview = ({ blockId }: { blockId: string }) => {
 
   switch (block.type) {
     case "heading": {
-      const Tag = (block.props.tag as keyof JSX.IntrinsicElements) ?? "h2";
+      const Tag = (block.props.tag as keyof ReactJSX.IntrinsicElements) ?? "h2";
       return (
         <Tag className="text-xl font-semibold text-slate-50">
           {String(block.props.text ?? "Heading")}
