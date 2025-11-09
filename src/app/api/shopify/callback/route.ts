@@ -52,7 +52,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid HMAC signature" }, { status: 400 });
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const storedState = cookieStore.get("shopify_oauth_state")?.value;
 
   if (!storedState || storedState !== state) {
