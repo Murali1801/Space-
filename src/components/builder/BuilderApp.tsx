@@ -69,6 +69,12 @@ const HeaderActions = ({
   publishDisabled: boolean;
 }) => (
   <div className="flex items-center gap-3 text-sm">
+    <Link
+      href="/app"
+      className="rounded-md border border-slate-700 px-3 py-1.5 text-slate-300 transition hover:border-indigo-500 hover:text-indigo-200"
+    >
+      Dashboard
+    </Link>
     <div className="flex flex-col gap-0.5">
       <SaveBadge status={saveStatus} lastSavedAt={lastSavedAt} />
       <PublishBadge status={publishStatus} error={publishError} />
@@ -110,23 +116,32 @@ export function BuilderApp() {
   const pageId = searchParams.get("page") ?? "landing-page";
 
   const persistence = useBuilderPersistence({ shop, pageId });
-  const publish = usePublish({ shop, pageId });
+  const {
+    publish: triggerPublish,
+    status: publishStatus,
+    error: publishError,
+  } = usePublish({ shop, pageId });
   const hasChanges = useBuilderStore(selectHasChanges);
 
-  const publishDisabled = !shop || hasChanges || persistence.status === "saving" || persistence.status === "loading" || publish.status === "loading";
+  const publishDisabled =
+    !shop ||
+    hasChanges ||
+    persistence.status === "saving" ||
+    persistence.status === "loading" ||
+    publishStatus === "loading";
 
   const header = useMemo(
     () => (
       <HeaderActions
         saveStatus={persistence.status}
         lastSavedAt={persistence.lastSavedAt}
-        publishStatus={publish.status}
-        publishError={publish.error}
-        onPublish={() => publish.publish()}
+        publishStatus={publishStatus}
+        publishError={publishError}
+        onPublish={() => triggerPublish()}
         publishDisabled={publishDisabled}
       />
     ),
-    [persistence.status, persistence.lastSavedAt, publish.status, publish.error, publish, publishDisabled],
+    [persistence.status, persistence.lastSavedAt, publishStatus, publishError, triggerPublish, publishDisabled],
   );
 
   if (!shop) {

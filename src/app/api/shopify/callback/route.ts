@@ -1,13 +1,18 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import crypto from "node:crypto";
+
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import { FieldValue } from "firebase-admin/firestore";
 
 import { env } from "@/lib/env";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/server";
 
 const SHOP_PARAM_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/;
 
-const getRedirectUri = () => `${env.SHOPIFY_APP_URL}`;
+const getRedirectUri = () => {
+  const baseUrl = env.SHOPIFY_APP_URL.replace(/\/$/, "");
+  return `${baseUrl}/app`;
+};
 
 const validateHmac = (searchParams: URLSearchParams) => {
   const hmac = searchParams.get("hmac");
@@ -53,9 +58,20 @@ export async function GET(request: Request) {
   }
 
   const cookieStore = await cookies();
-  const storedState = cookieStore.get("shopify_oauth_state")?.value;
+  const storedStateRaw = cookieStore.get("shopify_oauth_state")?.value ?? null;
 
-  if (!storedState || storedState !== state) {
+  if (!storedStateRaw) {
+    return NextResponse.json({ error: "Missing state cookie" }, { status: 400 });
+  }
+
+  let parsedState: { value: string; userId?: string | null } | null = null;
+  try {
+    parsedState = JSON.parse(storedStateRaw);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to parse state cookie" }, { status: 400 });
+  }
+
+  if (!parsedState?.value || parsedState.value !== state) {
     return NextResponse.json({ error: "State validation failed" }, { status: 400 });
   }
 
@@ -82,18 +98,37 @@ export async function GET(request: Request) {
   const tokenPayload: { access_token: string; scope: string } = await tokenResponse.json();
 
   const db = getFirebaseAdminFirestore();
-  await db
-    .collection("shops")
-    .doc(shop)
-    .set(
-      {
-        accessToken: tokenPayload.access_token,
-        scopes: tokenPayload.scope?.split(",") ?? [],
-        installedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true },
-    );
+  const installedAt = new Date().toISOString();
+
+  const shopUpdate: Record<string, unknown> = {
+    accessToken: tokenPayload.access_token,
+    scopes: tokenPayload.scope?.split(",") ?? [],
+    installedAt,
+    updatedAt: installedAt,
+  };
+
+  if (parsedState?.userId) {
+    shopUpdate.userIds = FieldValue.arrayUnion(parsedState.userId);
+  }
+
+  await db.collection("shops").doc(shop).set(shopUpdate, { merge: true });
+
+  if (parsedState?.userId) {
+    await db
+      .collection("users")
+      .doc(parsedState.userId)
+      .set(
+        {
+          [`shops.${shop}`]: {
+            domain: shop,
+            installedAt,
+          },
+          lastConnectedShop: shop,
+          updatedAt: installedAt,
+        },
+        { merge: true },
+      );
+  }
 
   const redirectUrl = new URL(getRedirectUri());
   redirectUrl.searchParams.set("shop", shop);
