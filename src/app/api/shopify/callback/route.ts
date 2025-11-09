@@ -114,20 +114,24 @@ export async function GET(request: Request) {
   await db.collection("shops").doc(shop).set(shopUpdate, { merge: true });
 
   if (parsedState?.userId) {
-    await db
-      .collection("users")
-      .doc(parsedState.userId)
-      .set(
-        {
-          [`shops.${shop}`]: {
+    const userRef = db.collection("users").doc(parsedState.userId);
+
+    // Remove legacy dotted field shape if it exists
+    await userRef.set({ [`shops.${shop}`]: FieldValue.delete() }, { merge: true });
+
+    await userRef.set(
+      {
+        shops: {
+          [shop]: {
             domain: shop,
             installedAt,
           },
-          lastConnectedShop: shop,
-          updatedAt: installedAt,
         },
-        { merge: true },
-      );
+        lastConnectedShop: shop,
+        updatedAt: installedAt,
+      },
+      { merge: true },
+    );
   }
 
   const redirectUrl = new URL(getRedirectUri());

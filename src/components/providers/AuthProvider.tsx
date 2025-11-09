@@ -20,6 +20,7 @@ type UserProfile = {
       domain: string;
       installedAt?: string;
       lastPublishedAt?: string | null;
+      lastPublishedThemeId?: number | null;
     }
   >;
   lastConnectedShop?: string | null;
@@ -55,11 +56,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const db = getFirebaseFirestore();
     const unsubscribe = onSnapshot(doc(db, "users", user.uid), (snapshot) => {
-      if (snapshot.exists()) {
-        setProfile((snapshot.data() as DocumentData) as UserProfile);
-      } else {
+      if (!snapshot.exists()) {
         setProfile(null);
+        return;
       }
+
+      const raw = snapshot.data() as DocumentData;
+
+      const toIsoString = (value: unknown) => {
+        if (!value) {
+          return undefined;
+        }
+        if (typeof value === "string") {
+          return value;
+        }
+        if (typeof (value as { toDate?: () => Date }).toDate === "function") {
+          try {
+            return (value as { toDate: () => Date }).toDate().toISOString();
+          } catch {
+            return undefined;
+          }
+        }
+        return undefined;
+      };
+
+      const shops: NonNullable<UserProfile["shops"]> = {};
+
+      const hydrateShop = (domain: string, value: unknown) => {
+        if (!domain) {
+          return;
+        }
+
+        const record =
+          value && typeof value === "object"
+            ? (value as { installedAt?: unknown; lastPublishedAt?: unknown; lastPublishedThemeId?: unknown })
+            : undefined;
+
+        shops[domain] = {
+          domain,
+          installedAt: toIsoString(record?.installedAt) ?? undefined,
+          lastPublishedAt: toIsoString(record?.lastPublishedAt) ?? null,
+          lastPublishedThemeId:
+            typeof record?.lastPublishedThemeId === "number" ? record.lastPublishedThemeId : null,
+        };
+      };
+
+      if (raw.shops && typeof raw.shops === "object" && !Array.isArray(raw.shops)) {
+        Object.entries(raw.shops).forEach(([domain, value]) => hydrateShop(domain, value));
+      }
+
+      Object.entries(raw)
+        .filter(([key]) => key.startsWith("shops.") && key.length > "shops.".length)
+        .forEach(([key, value]) => {
+          const domain = key.replace(/^shops\./, "");
+          hydrateShop(domain, value);
+        });
+
+      const profileData: UserProfile = {
+        email: raw.email ?? null,
+        displayName: raw.displayName ?? null,
+        lastConnectedShop: raw.lastConnectedShop ?? null,
+        shops: Object.keys(shops).length ? shops : undefined,
+      };
+
+      setProfile(profileData);
     });
 
     return unsubscribe;
