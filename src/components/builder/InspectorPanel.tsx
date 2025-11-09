@@ -1,9 +1,10 @@
 "use client";
 
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useRef, type ReactNode } from "react";
 
 import { BLOCK_DEFINITIONS } from "@/lib/builder/definitions";
 import { selectSelectedBlock, useBuilderStore } from "@/lib/builder/store";
+import { useCloudinaryUpload } from "@/hooks/useCloudinaryUpload";
 
 const Field = ({
   label,
@@ -21,9 +22,62 @@ const Field = ({
   </label>
 );
 
+const UploadButton = ({
+  onSelect,
+  status,
+}: {
+  onSelect: (file: File) => void;
+  status: string;
+}) => {
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const handleClick = () => {
+    fileRef.current?.click();
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) {
+            onSelect(file);
+            event.target.value = "";
+          }
+        }}
+      />
+      <button
+        type="button"
+        onClick={handleClick}
+        className="rounded-md border border-indigo-500 px-3 py-1.5 text-xs font-medium text-indigo-200 transition hover:bg-indigo-500/10 disabled:cursor-not-allowed disabled:border-slate-700 disabled:text-slate-500"
+        disabled={status === "signing" || status === "uploading"}
+      >
+        {status === "uploading" || status === "signing" ? "Uploading…" : "Upload image"}
+      </button>
+      {(status === "error" || status === "success") && (
+        <span
+          className={
+            status === "success"
+              ? "text-xs text-slate-500"
+              : "text-xs text-red-400"
+          }
+        >
+          {status === "success" ? "Uploaded" : "Upload failed"}
+        </span>
+      )}
+    </div>
+  );
+};
+
 export function InspectorPanel() {
   const selectedBlock = useBuilderStore(selectSelectedBlock);
   const updateBlockProps = useBuilderStore((state) => state.updateBlockProps);
+  const { upload, status: uploadStatus } = useCloudinaryUpload();
+  const selectedBlockId = selectedBlock?.id;
 
   if (!selectedBlock) {
     return (
@@ -42,7 +96,25 @@ export function InspectorPanel() {
   const definition = BLOCK_DEFINITIONS[selectedBlock.type];
 
   const update = (props: Record<string, unknown>) => {
-    updateBlockProps(selectedBlock.id, props);
+    if (!selectedBlockId) {
+      return;
+    }
+    updateBlockProps(selectedBlockId, props);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    const result = await upload(file);
+
+    if (result) {
+      update({
+        src: result.secureUrl,
+        alt: result.originalFilename ?? selectedBlock.props.alt ?? "",
+        cloudinaryAssetId: result.assetId,
+        cloudinaryPublicId: result.publicId,
+        width: result.width,
+        height: result.height,
+      });
+    }
   };
 
   return (
@@ -137,14 +209,18 @@ export function InspectorPanel() {
         {selectedBlock.type === "image" ? (
           <Fragment>
             <Field
-              label="Image URL"
-              description="Soon this will connect to Cloudinary"
+              label="Image"
+              description="Upload a new asset or paste an existing URL"
               input={
-                <input
-                  value={String(selectedBlock.props.src ?? "")}
-                  onChange={(event) => update({ src: event.target.value })}
-                  className="rounded-md border border-slate-700 bg-slate-950/80 px-3 py-2 text-sm text-slate-100 focus:border-indigo-400 focus:outline-none"
-                />
+                <div className="flex flex-col gap-2">
+                  <UploadButton onSelect={handleImageUpload} status={uploadStatus} />
+                  <input
+                    value={String(selectedBlock.props.src ?? "")}
+                    onChange={(event) => update({ src: event.target.value })}
+                    className="rounded-md border border-slate-700 bg-slate-950/80 px-3 py-2 text-sm text-slate-100 focus:border-indigo-400 focus:outline-none"
+                    placeholder="https://"
+                  />
+                </div>
               }
             />
             <Field

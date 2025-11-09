@@ -139,10 +139,17 @@ const BlockPreview = ({ blockId }: { blockId: string }) => {
       return <span className={`${base} ${styles}`}>{String(block.props.label ?? "Button")}</span>;
     }
     case "image": {
+      const src = typeof block.props.src === "string" ? block.props.src : "";
+      const alt = typeof block.props.alt === "string" ? block.props.alt : "Image alt text";
       return (
         <div className="relative w-full overflow-hidden rounded-md border border-slate-800">
-          <div className="aspect-video bg-slate-950/60" />
-          <p className="px-2 py-1 text-xs text-slate-500">{String(block.props.alt ?? "Image alt text")}</p>
+          {src ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={src} alt={alt} className="h-full w-full object-cover" />
+          ) : (
+            <div className="aspect-video bg-slate-950/60" />
+          )}
+          <p className="px-2 py-1 text-xs text-slate-500">{alt}</p>
         </div>
       );
     }
