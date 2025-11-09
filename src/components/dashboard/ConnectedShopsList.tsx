@@ -1,13 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
 
 export function ConnectedShopsList() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
+  const [pendingShop, setPendingShop] = useState<string | null>(null);
 
   const shops = profile?.shops ? Object.values(profile.shops) : [];
+
+  const handleReinstall = (domain: string) => {
+    if (!user) {
+      return;
+    }
+    setPendingShop(domain);
+    window.location.href = `/api/shopify/install?shop=${encodeURIComponent(domain)}&userId=${encodeURIComponent(
+      user.uid,
+    )}`;
+  };
 
   if (shops.length === 0) {
     return (
@@ -28,19 +40,32 @@ export function ConnectedShopsList() {
       </div>
       <ul className="space-y-3 text-sm">
         {shops.map((shop) => (
-          <li key={shop.domain} className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-950/60 px-4 py-3">
+          <li
+            key={shop.domain}
+            className="flex flex-col gap-3 rounded-lg border border-white/10 bg-slate-950/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+          >
             <div>
               <p className="font-medium text-white">{shop.domain}</p>
               <p className="text-xs text-slate-500">
                 Connected {shop.installedAt ? new Date(shop.installedAt).toLocaleDateString() : "recently"}
               </p>
             </div>
-            <Link
-              href={`/app/builder?shop=${encodeURIComponent(shop.domain)}`}
-              className="inline-flex items-center justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-400"
-            >
-              Open builder
-            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleReinstall(shop.domain)}
+                disabled={pendingShop === shop.domain}
+                className="inline-flex items-center justify-center rounded-md border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-indigo-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {pendingShop === shop.domain ? "Redirecting…" : "Reinstall app"}
+              </button>
+              <Link
+                href={`/app/builder?shop=${encodeURIComponent(shop.domain)}`}
+                className="inline-flex items-center justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-400"
+              >
+                Open builder
+              </Link>
+            </div>
           </li>
         ))}
       </ul>

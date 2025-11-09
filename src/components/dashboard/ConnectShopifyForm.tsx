@@ -56,11 +56,6 @@ export function ConnectShopifyForm() {
       return;
     }
 
-    if (connectedShops.includes(normalized)) {
-      setError("This store is already connected to your account.");
-      return;
-    }
-
     setLoading(true);
     const installUrl = `/api/shopify/install?shop=${encodeURIComponent(normalized)}&userId=${encodeURIComponent(
       user.uid,
@@ -98,11 +93,12 @@ export function ConnectShopifyForm() {
         disabled={loading}
         className="inline-flex items-center justify-center rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {loading ? "Redirecting…" : "Connect Shopify store"}
+        {loading ? "Redirecting…" : "Connect or reinstall store"}
       </button>
 
       <p className="text-xs text-slate-500">
-        You&apos;ll be redirected to Shopify to approve the installation. After accepting, come back here to open the builder.
+        You&apos;ll be redirected to Shopify to approve the installation. If the app was previously uninstalled, this will
+        reinstall it and refresh the access token.
       </p>
     </form>
   );
