@@ -50,13 +50,13 @@ const fetchThemes = async (shop: string, token: string): Promise<ShopifyTheme[]>
     return [];
   }
 
-  return payload.themes
-    .map((theme: Record<string, unknown>) => ({
+  return (payload.themes as Record<string, unknown>[])
+    .map<ShopifyTheme>((theme) => ({
       id: Number(theme.id),
       role: String(theme.role ?? ""),
       name: String(theme.name ?? ""),
     }))
-    .filter((theme) => !Number.isNaN(theme.id));
+    .filter((theme: ShopifyTheme) => !Number.isNaN(theme.id));
 };
 
 const uploadAsset = async (shop: string, token: string, themeId: number, key: string, value: string) => {
