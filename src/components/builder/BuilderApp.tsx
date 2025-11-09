@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import clsx from "clsx";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { BuilderShell } from "@/components/builder/BuilderShell";
@@ -11,6 +12,7 @@ import { InspectorPanel } from "@/components/builder/InspectorPanel";
 import { useBuilderPersistence } from "@/hooks/useBuilderPersistence";
 import { usePublish } from "@/hooks/usePublish";
 import { useBuilderStore, selectHasChanges } from "@/lib/builder/store";
+import { useAuth } from "@/hooks/useAuth";
 
 const formatTimestamp = (iso?: string) => {
   if (!iso) {
@@ -60,6 +62,9 @@ const HeaderActions = ({
   publishError,
   onPublish,
   publishDisabled,
+  themeIdInput,
+  onThemeIdChange,
+  themeIdInvalid,
 }: {
   saveStatus: string;
   lastSavedAt?: string;
@@ -67,6 +72,9 @@ const HeaderActions = ({
   publishError?: string | null;
   onPublish: () => void;
   publishDisabled: boolean;
+  themeIdInput: string;
+  onThemeIdChange: (value: string) => void;
+  themeIdInvalid: boolean;
 }) => (
   <div className="flex items-center gap-3 text-sm">
     <Link
@@ -87,6 +95,25 @@ const HeaderActions = ({
     >
       Shopify partner console
     </Link>
+    <div className="flex flex-col gap-1">
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={themeIdInput}
+        onChange={(event) => onThemeIdChange(event.target.value)}
+        placeholder="Theme ID (optional)"
+        className={clsx(
+          "w-36 rounded-md border bg-slate-900 px-2 py-1 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none",
+          themeIdInvalid
+            ? "border-red-500/60 focus:border-red-400"
+            : "border-slate-700 focus:border-indigo-400",
+        )}
+      />
+      <span className={clsx("text-[10px]", themeIdInvalid ? "text-red-400" : "text-slate-500")}>
+        {themeIdInvalid ? "Enter numeric theme ID" : "Leave blank to use the main theme"}
+      </span>
+    </div>
     <button
       type="button"
       className="rounded-md bg-indigo-500 px-3 py-1.5 font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:bg-slate-700"
@@ -114,6 +141,7 @@ export function BuilderApp() {
   const searchParams = useSearchParams();
   const shop = searchParams.get("shop");
   const pageId = searchParams.get("page") ?? "landing-page";
+  const { profile } = useAuth();
 
   const persistence = useBuilderPersistence({ shop, pageId });
   const {
@@ -122,13 +150,26 @@ export function BuilderApp() {
     error: publishError,
   } = usePublish({ shop, pageId });
   const hasChanges = useBuilderStore(selectHasChanges);
+  const lastPublishedThemeId = shop ? profile?.shops?.[shop]?.lastPublishedThemeId ?? null : null;
+  const [themeIdInput, setThemeIdInput] = useState<string>(
+    lastPublishedThemeId ? String(lastPublishedThemeId) : "",
+  );
+
+  useEffect(() => {
+    setThemeIdInput(lastPublishedThemeId ? String(lastPublishedThemeId) : "");
+  }, [lastPublishedThemeId, shop]);
+
+  const themeIdTrimmed = themeIdInput.trim();
+  const themeIdInvalid = themeIdTrimmed !== "" && Number.isNaN(Number(themeIdTrimmed));
+  const publishThemeId = !themeIdInvalid && themeIdTrimmed !== "" ? Number(themeIdTrimmed) : undefined;
 
   const publishDisabled =
     !shop ||
     hasChanges ||
     persistence.status === "saving" ||
     persistence.status === "loading" ||
-    publishStatus === "loading";
+    publishStatus === "loading" ||
+    themeIdInvalid;
 
   const header = useMemo(
     () => (
@@ -137,11 +178,24 @@ export function BuilderApp() {
         lastSavedAt={persistence.lastSavedAt}
         publishStatus={publishStatus}
         publishError={publishError}
-        onPublish={() => triggerPublish()}
+        onPublish={() => triggerPublish({ publishToThemeId: publishThemeId })}
         publishDisabled={publishDisabled}
+        themeIdInput={themeIdInput}
+        onThemeIdChange={setThemeIdInput}
+        themeIdInvalid={themeIdInvalid}
       />
     ),
-    [persistence.status, persistence.lastSavedAt, publishStatus, publishError, triggerPublish, publishDisabled],
+    [
+      persistence.status,
+      persistence.lastSavedAt,
+      publishStatus,
+      publishError,
+      triggerPublish,
+      publishDisabled,
+      themeIdInput,
+      themeIdInvalid,
+      publishThemeId,
+    ],
   );
 
   if (!shop) {
