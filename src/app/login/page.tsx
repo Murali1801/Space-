@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 export const metadata = {
@@ -11,8 +12,12 @@ export default function LoginPage() {
         <h1 className="text-3xl font-semibold text-white">Welcome back</h1>
         <p className="mt-2 text-sm text-slate-400">Sign in to manage your Shopify landing pages.</p>
       </div>
-      <LoginForm />
+      <Suspense fallback={<div className="text-sm text-slate-400">Loading sign-in form…</div>}>
+        <LoginForm />
+      </Suspense>
     </div>
   );
 }
+
+export const dynamic = "force-dynamic";
 
