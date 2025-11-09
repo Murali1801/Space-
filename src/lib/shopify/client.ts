@@ -10,4 +10,5 @@ export const shopify = shopifyApi({
   hostName: normalizeHost(env.SHOPIFY_HOST),
   hostScheme: env.SHOPIFY_HOST.startsWith("https://") ? "https" : "http",
   apiVersion: LATEST_API_VERSION,
+  isEmbeddedApp: false,
 });
