@@ -63,12 +63,12 @@ export default function DashboardPage() {
   }, [activeTab]);
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100">
-      <aside className="hidden w-60 flex-col border-r border-white/5 bg-slate-950/80 px-6 py-8 text-sm md:flex">
+    <div className="flex min-h-screen bg-[#F6F8FA] text-[#111827]">
+      <aside className="hidden w-60 flex-col border-r border-[#E5EBF3] bg-white px-6 py-8 text-sm md:flex">
         <div className="space-y-1">
-          <p className="text-xs uppercase tracking-widest text-slate-500">Workspace</p>
-          <p className="text-lg font-semibold text-white">{shopLabel}</p>
-          <p className="text-xs text-slate-500">{greeting}</p>
+          <p className="text-xs uppercase tracking-widest text-[#6B7280]">Workspace</p>
+          <p className="text-lg font-semibold text-[#111827]">{shopLabel}</p>
+          <p className="text-xs text-[#6B7280]">{greeting}</p>
         </div>
 
         <nav className="mt-10 space-y-1">
@@ -79,14 +79,14 @@ export default function DashboardPage() {
         </nav>
 
         <div className="mt-auto">
-          <div className="rounded-lg border border-white/10 bg-slate-900/70 px-4 py-3 text-xs text-slate-400">
-            <p className="font-medium text-slate-200">Need help?</p>
+          <div className="rounded-lg border border-[#E5EBF3] bg-[#F4F6FB] px-4 py-3 text-xs text-[#4B5563]">
+            <p className="font-medium text-[#111827]">Need help?</p>
             <p className="mt-1">
               Our team is happy to help configure your theme or answer any questions about Space.
             </p>
             <Link
               href="mailto:support@spacebuilder.app"
-              className="mt-3 inline-flex items-center gap-1 text-indigo-300 hover:text-indigo-200"
+              className="mt-3 inline-flex items-center gap-1 text-[#2563EB] hover:text-[#1D4ED8]"
             >
               Contact support →
             </Link>
@@ -96,27 +96,27 @@ export default function DashboardPage() {
 
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-10">
-          <header className="flex flex-col gap-6 rounded-2xl border border-white/5 bg-gradient-to-br from-indigo-500/10 via-slate-900/70 to-slate-950 p-8 shadow-lg shadow-indigo-500/10 lg:flex-row lg:items-center lg:justify-between">
+          <header className="flex flex-col gap-6 rounded-2xl border border-[#E5EBF3] bg-white p-8 shadow-sm lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
-              <span className="inline-flex items-center rounded-full border border-white/10 bg-slate-900/60 px-3 py-1 text-xs uppercase tracking-[0.32em] text-indigo-200">
+              <span className="inline-flex items-center rounded-full border border-[#E5EBF3] bg-[#F4F6FB] px-3 py-1 text-[10px] uppercase tracking-[0.32em] text-[#2563EB]">
                 Updates
               </span>
-              <h1 className="text-3xl font-semibold text-white">
+              <h1 className="text-3xl font-semibold text-[#111827]">
                 Updates to our plans and pricing
               </h1>
-              <p className="max-w-2xl text-sm text-slate-300">
+              <p className="max-w-2xl text-sm text-[#4B5563]">
                 We&apos;re consolidating our Shopify theme editor and Space Page Builder into one simple plan. Manage sections,
                 templates, and analytics without leaving this dashboard.
               </p>
               <Link
                 href="https://spacebuilder.app/changelog"
-                className="inline-flex items-center text-xs font-medium text-indigo-300 transition hover:text-indigo-200"
+                className="inline-flex items-center text-xs font-medium text-[#2563EB] transition hover:text-[#1D4ED8]"
               >
                 See full details →
               </Link>
             </div>
-            <div className="self-start rounded-xl border border-white/10 bg-slate-900/60 px-6 py-4 text-sm text-slate-400">
-              <p className="text-xs uppercase tracking-widest text-slate-500">Quick actions</p>
+            <div className="self-start rounded-xl border border-[#E5EBF3] bg-[#F9FAFB] px-6 py-4 text-sm text-[#4B5563]">
+              <p className="text-xs uppercase tracking-widest text-[#6B7280]">Quick actions</p>
               <ul className="mt-3 space-y-2">
                 <li>• Import sections from Replo</li>
                 <li>• Sync your Shopify theme</li>
@@ -124,7 +124,7 @@ export default function DashboardPage() {
               </ul>
               <Link
                 href="/app/builder"
-                className="mt-4 inline-flex rounded-md bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-400"
+                className="mt-4 inline-flex rounded-md bg-[#2563EB] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1D4ED8]"
               >
                 Open builder
               </Link>
@@ -138,17 +138,17 @@ export default function DashboardPage() {
                   <input
                     type="search"
                     placeholder="Search pages"
-                    className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none"
+                    className="w-full rounded-lg border border-[#E5EBF3] bg-white px-3 py-2 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:outline-none"
                   />
-                  <span className="pointer-events-none absolute right-3 text-xs uppercase tracking-widest text-slate-500">
+                  <span className="pointer-events-none absolute right-3 text-xs uppercase tracking-widest text-[#9CA3AF]">
                     ⌘K
                   </span>
                 </label>
-                <div className="relative hidden text-xs text-slate-400 sm:inline-flex">
-                  <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900 px-3 py-2">
-                    <span>Last Modified</span>
+                <div className="relative hidden text-xs text-[#4B5563] sm:inline-flex">
+                  <label className="flex items-center gap-2 rounded-lg border border-[#E5EBF3] bg-white px-3 py-2">
+                    <span className="font-medium text-[#111827]">Last Modified</span>
                     <svg
-                      className="h-3 w-3 text-slate-500"
+                      className="h-3 w-3 text-[#9CA3AF]"
                       viewBox="0 0 12 12"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
@@ -158,7 +158,7 @@ export default function DashboardPage() {
                   </label>
                 </div>
               </div>
-              <button className="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-indigo-500/20 transition hover:bg-indigo-400">
+              <button className="inline-flex items-center justify-center rounded-lg bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1D4ED8]">
                 + New Page
               </button>
             </div>
@@ -171,8 +171,8 @@ export default function DashboardPage() {
                   className={clsx(
                     "rounded-full px-3 py-1.5 text-xs font-semibold transition",
                     activeTab === tab.key
-                      ? "bg-indigo-500 text-white"
-                      : "border border-white/10 bg-slate-900/60 text-slate-300 hover:border-indigo-400 hover:text-indigo-200",
+                      ? "bg-[#2563EB] text-white shadow-sm"
+                      : "border border-[#E5EBF3] bg-white text-[#4B5563] hover:border-[#2563EB] hover:text-[#2563EB]",
                   )}
                 >
                   {tab.label}
@@ -180,10 +180,10 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-white/10 bg-slate-950/80">
-              <table className="min-w-full text-sm">
+            <div className="overflow-hidden rounded-xl border border-[#E5EBF3] bg-white shadow-sm">
+              <table className="min-w-full text-sm text-[#1F2937]">
                 <thead>
-                  <tr className="border-b border-white/5 text-xs uppercase tracking-widest text-slate-500">
+                  <tr className="border-b border-[#E5EBF3] bg-[#F9FAFB] text-xs uppercase tracking-widest text-[#6B7280]">
                     <th className="px-5 py-3 text-left font-semibold">Name</th>
                     <th className="px-5 py-3 text-left font-semibold">Last Edited</th>
                     <th className="px-5 py-3 text-left font-semibold">Type</th>
@@ -194,20 +194,20 @@ export default function DashboardPage() {
                   {filteredPages.map((page) => (
                     <tr
                       key={page.id}
-                      className="border-b border-white/5 transition hover:bg-slate-900/60 last:border-b-0"
+                      className="border-b border-[#F3F4F6] transition hover:bg-[#F9FAFB] last:border-b-0"
                     >
-                      <td className="flex items-center gap-3 px-5 py-4 font-medium text-white">
+                      <td className="flex items-center gap-3 px-5 py-4 font-medium text-[#111827]">
                         {page.status === "live" ? (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+                          <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#22C55E]"></span>
                         ) : (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-slate-600"></span>
+                          <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#D1D5DB]"></span>
                         )}
                         {page.name}
                       </td>
-                      <td className="px-5 py-4 text-slate-400">{page.lastEdited}</td>
-                      <td className="px-5 py-4 text-slate-400">{page.type}</td>
+                      <td className="px-5 py-4 text-[#6B7280]">{page.lastEdited}</td>
+                      <td className="px-5 py-4 text-[#6B7280]">{page.type}</td>
                       <td className="px-5 py-4 text-right">
-                        <button className="rounded-md border border-white/10 px-3 py-1 text-xs text-slate-300 transition hover:border-indigo-400 hover:text-indigo-200">
+                        <button className="rounded-md border border-[#E5EBF3] px-3 py-1 text-xs text-[#2563EB] transition hover:border-[#2563EB] hover:bg-[#EEF2FF]">
                           Edit
                         </button>
                       </td>
@@ -233,15 +233,15 @@ const NavItem = ({ label, active = false }: { label: string; active?: boolean })
     className={clsx(
       "flex items-center justify-between rounded-lg px-3 py-2 text-sm transition",
       active
-        ? "border border-white/15 bg-indigo-500/20 text-white shadow-sm shadow-indigo-500/20"
-        : "text-slate-400 hover:border hover:border-white/10 hover:text-white",
+        ? "border border-[#D4DEEE] bg-[#E9F0FF] text-[#1D4ED8] shadow-sm"
+        : "text-[#6B7280] hover:border hover:border-[#D4DEEE] hover:bg-[#EEF2FF]",
     )}
   >
     <span>{label}</span>
     {active ? (
-      <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+      <span className="inline-flex h-2 w-2 rounded-full bg-[#34D399]"></span>
     ) : (
-      <span className="inline-flex h-2 w-2 rounded-full bg-slate-600"></span>
+      <span className="inline-flex h-2 w-2 rounded-full bg-[#D1D5DB]"></span>
     )}
   </div>
 );
